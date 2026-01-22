@@ -1,4 +1,4 @@
-package model;
+package model.deck;
 
 /**
  * Interfaccia che rappresenta una carta di gioco.
