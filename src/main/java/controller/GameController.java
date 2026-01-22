@@ -1,6 +1,6 @@
 package controller;
 
-import model.Card;
+import model.deck.Card;
 
 /**
  * Controller del gioco, gestisce il gameLoop e fa da tramite tra view e model.

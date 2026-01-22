@@ -1,4 +1,8 @@
-package model;
+package model.core;
+
+import utils.GameState;
+import model.deck.Card;
+import model.player.Player;
 
 /**
  * Manager centrale che gestisce stati del gioco.

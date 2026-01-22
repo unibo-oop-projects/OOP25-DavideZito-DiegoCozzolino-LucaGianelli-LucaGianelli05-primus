@@ -1,4 +1,6 @@
-package model;
+package utils;
+
+import model.deck.Card;
 
 import java.util.ArrayList;
 import java.util.List;
