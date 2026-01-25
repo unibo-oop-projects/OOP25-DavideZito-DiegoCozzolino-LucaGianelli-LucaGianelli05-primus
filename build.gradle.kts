@@ -29,3 +29,7 @@ tasks.named("check") {
 tasks.named("compileJava") {
     dependsOn(installGitHooks)
 }
+dependencies{
+    // Source: https://mvnrepository.com/artifact/org.projectlombok/lombok
+    implementation("org.projectlombok:lombok:1.18.42")
+}
