@@ -5,43 +5,43 @@ import model.deck.Card;
 import model.player.Player;
 
 /**
- * Manager centrale che gestisce stati del gioco.
+ * Game manager interface which handles game states.
  */
 public interface GameManager {
     /**
-     * Crea istanze e imposta dati per poter iniziare la partita.
+     * Creates instances and sets data to start the game.
      */
     void init();
 
     /**
-     * @return lo stato di gioco attuale
+     * @return the game state
      */
     GameState getGameState();
 
     /**
-     * @return il giocatore giocante in questo turno
+     * @return the current player in this turn
      */
     Player getCurrentPlayer();
 
     /**
      * Valida una carta basandosi sullo stato di gioco.
      *
-     * @param carta carta da valutare
-     * @param giocatore giocante
-     * @return `True` se la carta rispetta le regole per essere giocata
+     * @param carta card to be validated
+     * @param giocatore player who is playing
+     * @return `True` if the card is valid
      */
     boolean validateCard(Card carta, Player giocatore);
 
     /**
-     * Gioca una carta.
+     * Play a card.
      *
-     * @param carta carta giocata
-     * @param giocatore che fa la mossa
+     * @param carta played card
+     * @param giocatore player
      */
     void playCard(Card carta, Player giocatore);
 
     /**
-     * @return `True` se la partita è conclusa
+     * @return `True` if the match is concluded
      */
     boolean isFinished();
 }

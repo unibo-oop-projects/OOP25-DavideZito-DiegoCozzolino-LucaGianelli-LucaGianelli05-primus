@@ -3,28 +3,28 @@ package controller;
 import model.deck.Card;
 
 /**
- * Controller del gioco, gestisce il gameLoop e fa da tramite tra view e model.
+ * Game controller interface, manages the game loop and acts as a bridge between view and model.
  */
 public interface GameController {
     /**
-     * Avvia il gameLoop in un nuovo thread separato.
+     * Starts the game loop in a separate thread.
      */
     void start();
 
     /**
-     * Ferma il thread del gameLoop.
+     * Stops the game loop.
      */
     void stop();
 
     /**
-     * Notifica il Game che il giocatore ha giocato la carta.
+     * Notifies the Game that the player has chosen to play a card.
      *
-     * @param card la carta scelta dal giocatore
+     * @param card the card played by the human player
      */
     void humanPlayedCard(Card card);
 
     /**
-     * Notifica il Game che il giocatore ha passato il turno.
+     * Notifies the Game that the player has chosen to pass their turn.
      */
     void humanDrewCard();
 }
