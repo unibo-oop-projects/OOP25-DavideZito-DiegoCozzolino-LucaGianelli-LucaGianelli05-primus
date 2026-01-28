@@ -3,6 +3,7 @@ package model.player;
 import model.deck.Card;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents a player in the game. A player can either be a human or a bot.
@@ -16,7 +17,7 @@ public interface Player {
      *
      * @return the card played by the player
      */
-    Card playCard();
+    Optional<Card> playCard();
 
     /**
      * Checks if the player is a bot.

@@ -4,6 +4,7 @@ import model.deck.Card;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 
 /**
@@ -22,11 +23,12 @@ public final class RandomStrategy implements BotStrategy {
      * @throws IllegalArgumentException if the list of possible cards is empty
      */
     @Override
-    public Card chooseCard(final List<Card> possibleCards) {
+    public Optional<Card> chooseCard(final List<Card> possibleCards) {
         Objects.requireNonNull(possibleCards);
         if (possibleCards.isEmpty()) {
-            throw new IllegalArgumentException("possibleCards cannot be empty");
+            return Optional.empty();
         }
-        return possibleCards.get(random.nextInt(0, possibleCards.size()));
+        final Card selectedCard = possibleCards.get(random.nextInt(0, possibleCards.size()));
+        return selectedCard == null ? Optional.empty() : Optional.of(selectedCard);
     }
 }

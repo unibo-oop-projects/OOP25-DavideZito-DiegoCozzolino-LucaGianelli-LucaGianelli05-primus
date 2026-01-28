@@ -6,6 +6,7 @@ import model.player.Player;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -24,7 +25,7 @@ public final class Bot implements Player {
     /**
      * Constructs a new Bot instance with a unique identifier and the relate strategy.
      *
-     * @param id the unique identifier for this bot
+     * @param id       the unique identifier for this bot
      * @param strategy the algorithm used fot this bot
      */
     public Bot(final int id, final BotStrategy strategy) {
@@ -33,9 +34,12 @@ public final class Bot implements Player {
     }
 
     @Override
-    public Card playCard() {
-        currentTriedCard = strategy.chooseCard(hand.stream().filter(card -> !rejectedCards.contains(card)).toList());
-        return currentTriedCard;
+    public Optional<Card> playCard() {
+        final Optional<Card> choice = strategy.chooseCard(hand.stream()
+                .filter(card -> !rejectedCards.contains(card))
+                .toList());
+        currentTriedCard = choice.orElse(null);
+        return choice;
     }
 
     @Override
@@ -55,7 +59,11 @@ public final class Bot implements Player {
 
     @Override
     public boolean passTurn() {
-        return false;
+        // ask the strategy want to pass or not
+        final List<Card> possibleMoves = hand.stream()
+                .filter(card -> !rejectedCards.contains(card))
+                .toList();
+        return strategy.chooseCard(possibleMoves).isEmpty();
     }
 
     @Override
