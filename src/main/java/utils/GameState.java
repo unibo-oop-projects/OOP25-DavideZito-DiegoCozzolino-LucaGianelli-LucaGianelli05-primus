@@ -6,31 +6,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Rappresenta lo stato del gioco in questo momento.
+ * DTO class which represents the game state.
  *
- * @param topCard carta attualmente in gioco
- * @param playerDeck mano attuale del giocatore
+ * @param topCard currently played card
+ * @param playerDeck current player's hand
  */
 public record GameState(Card topCard, List<Card> playerDeck) {
     /**
-     * @param topCard carta attualmente in gioco
-     * @param playerDeck mano attuale del giocatore
+     * @param topCard currently played card
+     * @param playerDeck current player's hand
      */
     public GameState {
         playerDeck = List.copyOf(playerDeck);
     }
 
     /**
-     * @param newTopCard nuova carta attualmente in gioco
-     * @return `GameState` basato su quello attuale modificando carta in gioco
+     * @param newTopCard new card currently in play
+     * @return `GameState` based on the current one modifying the card in play
      */
     public GameState withTopCard(final Card newTopCard) {
         return new GameState(newTopCard, this.playerDeck);
     }
 
     /**
-     * @param card carta da aggiungere alla mano del giocatore
-     * @return `GameState` basato su quello attuale aggiungendo una carta alla mano del giocatore
+     * @param card card to add to the player's hand
+     * @return `GameState` based on the current one adding a card to the player's hand
      */
     public GameState withAddedCard(final Card card) {
         final var newDeck = new ArrayList<>(this.playerDeck);
@@ -39,9 +39,9 @@ public record GameState(Card topCard, List<Card> playerDeck) {
     }
 
     /**
-     * @param newTopCard nuova carta attualmente in gioco
-     * @param card carta da aggiungere alla mano del giocatore
-     * @return `GameState` basato su quello attuale modificando carta in gioco e aggiungendo carta alla mano del giocatore
+     * @param newTopCard new card currently in play
+     * @param card card to add to the player's hand
+     * @return `GameState` based on the current one modifying the card in play and adding a card to the player's hand
      */
     public GameState newFromCurrent(final Card newTopCard, final Card card) {
         return withAddedCard(card).withTopCard(topCard);

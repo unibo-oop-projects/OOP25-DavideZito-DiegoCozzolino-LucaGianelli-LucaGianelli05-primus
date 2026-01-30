@@ -1,7 +1,7 @@
 package view;
 
 /**
- * View del tavolo di gioco.
+ * Game view interface.
  */
 public interface GameView {
 }
