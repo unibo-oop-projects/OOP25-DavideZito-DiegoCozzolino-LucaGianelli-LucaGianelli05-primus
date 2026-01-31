@@ -37,4 +37,9 @@ public final class AggressiveStrategy implements BotStrategy {
             default -> 20;             // Usa le action card solo se necessario
         }*/
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
 }

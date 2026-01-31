@@ -31,4 +31,9 @@ public final class RandomStrategy implements BotStrategy {
         final Card selectedCard = possibleCards.get(random.nextInt(0, possibleCards.size()));
         return selectedCard == null ? Optional.empty() : Optional.of(selectedCard);
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
+    }
 }

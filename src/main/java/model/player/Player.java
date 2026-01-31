@@ -64,8 +64,9 @@ public interface Player {
      * This method allows the bot to update its internal state (e.g., memory of rejected cards)
      * or to finalize the turn (e.g., removing the card from hand if valid).
      *
-     * @param valid true if the move was accepted by the rules, false otherwise.
+     * @param cardPlayed the card been validated
+     * @param valid      true if the move was accepted by the rules, false otherwise.
      */
-    void notifyMoveResult(boolean valid);
+    void notifyMoveResult(Card cardPlayed, boolean valid);
 
 }

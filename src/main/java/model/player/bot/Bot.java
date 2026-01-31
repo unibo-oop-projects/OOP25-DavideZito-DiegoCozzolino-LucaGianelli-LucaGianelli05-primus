@@ -6,6 +6,7 @@ import model.player.Player;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,13 +14,10 @@ import java.util.Set;
  * Represents a bot player in the game. The bot implements the {@link Player} interface
  * and provides its own behavior for playing cards, passing turns, and managing its hand.
  */
-
 public final class Bot implements Player {
-
     private final int id;
     private final List<Card> hand = new ArrayList<>();
     private final Set<Card> rejectedCards = new LinkedHashSet<>();
-    private Card currentTriedCard;
     private final BotStrategy strategy;
 
     /**
@@ -35,11 +33,7 @@ public final class Bot implements Player {
 
     @Override
     public Optional<Card> playCard() {
-        final Optional<Card> choice = strategy.chooseCard(hand.stream()
-                .filter(card -> !rejectedCards.contains(card))
-                .toList());
-        currentTriedCard = choice.orElse(null);
-        return choice;
+        return strategy.chooseCard(calculatePossibleMoves());
     }
 
     @Override
@@ -54,16 +48,20 @@ public final class Bot implements Player {
 
     @Override
     public void addCards(final List<Card> cards) {
+        Objects.requireNonNull(cards);
         hand.addAll(cards);
     }
 
     @Override
     public boolean passTurn() {
         // ask the strategy want to pass or not
-        final List<Card> possibleMoves = hand.stream()
+        return strategy.chooseCard(calculatePossibleMoves()).isEmpty();
+    }
+
+    private List<Card> calculatePossibleMoves() {
+        return hand.stream()
                 .filter(card -> !rejectedCards.contains(card))
                 .toList();
-        return strategy.chooseCard(possibleMoves).isEmpty();
     }
 
     @Override
@@ -72,17 +70,45 @@ public final class Bot implements Player {
     }
 
     @Override
-    public void notifyMoveResult(final boolean valid) {
+    public void notifyMoveResult(final Card cardPlayed, final boolean valid) {
+        Objects.requireNonNull(cardPlayed);
         if (!valid) {
-            rejectedCards.add(currentTriedCard);
+            rejectedCards.add(cardPlayed);
         } else {
-            resetTurn();
+            if (!hand.contains(cardPlayed)) {
+                throw new IllegalStateException("The card validated is not present in the hand");
+            }
+            hand.remove(cardPlayed);
+            rejectedCards.clear();
         }
     }
 
-    private void resetTurn() {
-        hand.remove(currentTriedCard);
-        currentTriedCard = null;
-        rejectedCards.clear();
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final Bot bot = (Bot) o;
+
+        return id == bot.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return "Bot{"
+                + "id=" + id
+                + ", hand=" + hand
+                + ", rejectedCards=" + rejectedCards
+                + ", strategy=" + strategy
+                + '}';
     }
 }
