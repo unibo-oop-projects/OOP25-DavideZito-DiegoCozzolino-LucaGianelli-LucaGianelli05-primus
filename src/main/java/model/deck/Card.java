@@ -1,7 +1,7 @@
 package model.deck;
 
 /**
- * Interfaccia che rappresenta una carta di gioco.
+ * Card interface.
  */
 public interface Card {
 }
