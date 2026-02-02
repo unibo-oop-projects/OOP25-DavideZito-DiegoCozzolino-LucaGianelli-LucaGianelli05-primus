@@ -34,12 +34,6 @@ public final class CheaterStrategy implements BotStrategy {
         return possibleCards.stream().max(Comparator.comparingInt(this::calculateScore));
     }
 
-    /**
-     * Calculates a strategic score for a card based on the current game context.
-     *
-     * @param c the card to evaluate
-     * @return an integer representing the card's priority (higher is better)
-     */
     private int calculateScore(final Card c) {
         victim.getCardCount();
         if (c == null) {
