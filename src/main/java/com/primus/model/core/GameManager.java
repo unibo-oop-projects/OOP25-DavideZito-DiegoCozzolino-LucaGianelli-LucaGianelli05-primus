@@ -4,17 +4,19 @@ import com.primus.model.deck.Card;
 import com.primus.utils.GameState;
 import com.primus.model.player.Player;
 
+import java.util.Optional;
+
 /**
- * Game manager interface which handles game states.
+ * Interface to manage the game flow.
  */
 public interface GameManager {
     /**
-     * Creates instances and sets data to start the game.
+     * Creates instances and sets data to start the game, useful when restarting a new game.
      */
     void init();
 
     /**
-     * @return the game state
+     * @return the game state in current turn
      */
     GameState getGameState();
 
@@ -24,24 +26,23 @@ public interface GameManager {
     Player nextPlayer();
 
     /**
-     * Valida una carta basandosi sullo stato di gioco.
+     * Assigns malus cards to the current player if any are available and skips the turn if necessary.
      *
-     * @param carta card to be validated
-     * @param giocatore player who is playing
-     * @return `True` if the card is valid
+     * @return {@code True} if the player has suffered a malus and must skip the turn
      */
-    boolean validateCard(Card carta, Player giocatore);
+    boolean resolvePreTurnMalus();
 
     /**
-     * Play a card.
-     *
-     * @param carta played card
-     * @param giocatore player
+     * @return An {@link Optional} containing the winner player if the game is finished, empty otherwise
      */
-    void playCard(Card carta, Player giocatore);
+    Optional<Player> getWinner();
 
     /**
-     * @return `True` if the match is concluded
+     * Executes the turn for the current player with the chosen card.
+     *
+     * @param currentPlayer the player whose turn it is
+     * @param chosenCard the card chosen to play, may be null if drawing
+     * @return {@code True} if the turn was executed successfully
      */
-    boolean isFinished();
+    boolean executeTurn(Player currentPlayer, Card chosenCard);
 }
