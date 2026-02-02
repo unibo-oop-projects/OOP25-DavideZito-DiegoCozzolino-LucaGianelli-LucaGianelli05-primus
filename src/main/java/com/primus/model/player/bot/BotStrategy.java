@@ -13,6 +13,7 @@ import java.util.Optional;
  */
 @FunctionalInterface
 public interface BotStrategy {
+
     /**
      * Chooses the best card from the hand, ignoring the cards present in failedAttempts.
      *
