@@ -14,7 +14,7 @@ public final class ValidatorImpl implements Validator {
     public boolean isValidCard(final Card topCard, final Card toValidate) {
         Objects.requireNonNull(toValidate);
         Objects.requireNonNull(topCard);
-        return toValidate.isBlack()
+        return toValidate.isNativeBlack()
                 || toValidate.getColor() == topCard.getColor()
                 || toValidate.getValue() == topCard.getValue();
     }
