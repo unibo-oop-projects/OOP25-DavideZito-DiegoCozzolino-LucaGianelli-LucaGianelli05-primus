@@ -19,6 +19,9 @@ public final class RandomColorStrategy implements ColorStrategy {
     @Override
     public Color chooseColor(final List<Card> hand) {
         Objects.requireNonNull(hand);
+        if (hand.isEmpty()) {
+            throw new IllegalArgumentException("Hand can't be empty");
+        }
         return Color.values()[random.nextInt(0, Color.values().length)];
     }
 }
