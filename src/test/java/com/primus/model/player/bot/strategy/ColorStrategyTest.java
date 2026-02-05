@@ -27,7 +27,8 @@ class ColorStrategyTest {
         final List<Card> hand = List.of(card(Color.RED));
         final Color result = strategy.chooseColor(hand);
         assertNotNull(result);
-        assertTrue(result == Color.RED || result == Color.BLUE || result == Color.GREEN || result == Color.YELLOW);
+        assertTrue(result != Color.BLACK, "Strategy should not choose BLACK as a declared color");
+        assertTrue(List.of(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW).contains(result));
     }
 
     @Test

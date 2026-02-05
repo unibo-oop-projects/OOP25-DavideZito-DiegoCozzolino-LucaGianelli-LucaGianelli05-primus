@@ -2,7 +2,7 @@ package com.primus.model.player.bot.strategy.color;
 
 import com.primus.model.deck.Card;
 import com.primus.model.deck.Color;
-
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -22,6 +22,9 @@ public final class RandomColorStrategy implements ColorStrategy {
         if (hand.isEmpty()) {
             throw new IllegalArgumentException("Hand can't be empty");
         }
-        return Color.values()[random.nextInt(0, Color.values().length)];
+        final List<Color> validColors = Arrays.stream(Color.values())
+                .filter(c -> c != Color.BLACK)
+                .toList();
+        return validColors.get(random.nextInt(validColors.size()));
     }
 }
