@@ -117,4 +117,15 @@ class BotTest {
                         hand.add(card(Color.BLUE, Values.ONE)),
                 "getHand should return an unmodifiable list");
     }
+
+    @Test
+    void testPlayCardShouldNotReplayRejectedWildCard() {
+        final Card wildCard = card(Color.BLACK, Values.WILD);
+        bot.addCards(List.of(wildCard));
+        final Optional<Card> playedCard = bot.playCard();
+        assertTrue(playedCard.isPresent(), "Bot should play the wild card");
+        bot.notifyMoveResult(playedCard.get(), false);
+        assertEquals(1, bot.getHand().size(), "Wild card should remain in hand after rejection");
+        assertTrue(bot.playCard().isEmpty(), "Rejected wild card should not be played again");
+    }
 }

@@ -10,11 +10,29 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * A strategy implementation for choosing a color based on frequency.
+ * A {@link ColorStrategy} implementation for choosing a color based on frequency.
  * This strategy analyzes the bot's hand and selects the color that appears
  * the most times.
  */
 public final class MostFrequentColorStrategy implements ColorStrategy {
+    /**
+     * Creates a new instance of the MostFrequentColorStrategy.
+     */
+    public MostFrequentColorStrategy() {
+        // Default constructor intentionally empty
+    }
+
+    /**
+     * {@inheritDoc}
+     * Implementation logic:
+     * 1. Filters out Wilds cards.
+     * 2. Counts occurrences of each color.
+     * 3. Selects the color with the highest count.
+     * 4. Defaults to {@link Color#RED} if the hand contains only Black cards.
+     *
+     * @throws NullPointerException     if the hand list is null.
+     * @throws IllegalArgumentException if the hand list is empty.
+     */
     @Override
     public Color chooseColor(final List<Card> hand) {
         Objects.requireNonNull(hand);
@@ -28,7 +46,7 @@ public final class MostFrequentColorStrategy implements ColorStrategy {
             }
         }
         final var chooseColor = map.entrySet().stream().max(Comparator.comparingInt(Map.Entry::getValue));
-        // E.g. all card are black means the color is not important
+        // E.g. all cards are black means the color is not important
         if (chooseColor.isEmpty()) {
             return Color.RED;
         }

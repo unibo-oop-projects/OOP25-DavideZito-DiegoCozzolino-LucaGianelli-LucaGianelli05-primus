@@ -14,8 +14,9 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Represents a bot player in the game. The bot implements the {@link Player} interface
- * and provides its own behavior for playing cards, passing turns, and managing its hand.
+ * Represents a bot player in the game.
+ * The bot implements the {@link Player} interface and provides its own behavior for playing cards,
+ * passing turns, and managing its hand based on injected strategies.
  */
 public final class Bot implements Player {
     private final int id;
@@ -27,9 +28,10 @@ public final class Bot implements Player {
     /**
      * Constructs a new Bot with specific strategies for card selection and color decision.
      *
-     * @param id            the unique identifier
-     * @param cardStrategy  the logic to select cards
-     * @param colorStrategy the logic to select colors for Wild cards
+     * @param id            the unique identifier.
+     * @param cardStrategy  the logic to select cards.
+     * @param colorStrategy the logic to select colors for Wild cards.
+     * @throws NullPointerException if any strategy is null.
      */
     public Bot(final int id, final CardStrategy cardStrategy, final ColorStrategy colorStrategy) {
         this.id = id;
@@ -37,9 +39,14 @@ public final class Bot implements Player {
         this.colorStrategy = Objects.requireNonNull(colorStrategy);
     }
 
+    /**
+     * {@inheritDoc}
+     * The bot uses the CardStrategy to pick a move.
+     * If a Wild card is selected, the ColorStrategy determines the new color.
+     */
     @Override
     public Optional<Card> playCard() {
-        // the card strategy pick a card among possible moves
+        // The card strategy pick a card among possible moves
         final Optional<Card> chosenOpt = cardStrategy.chooseCard(calculatePossibleMoves());
         if (chosenOpt.isPresent()) {
             final Card card = chosenOpt.get();
@@ -54,43 +61,78 @@ public final class Bot implements Player {
         return chosenOpt;
     }
 
+    /**
+     * Filters the hand excluding cards that have already been rejected during this turn.
+     *
+     * @return a list of potential candidates for the move.
+     */
     private List<Card> calculatePossibleMoves() {
         return hand.stream()
                 .filter(card -> !rejectedCards.contains(card))
                 .toList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean isBot() {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Card> getHand() {
         return List.copyOf(hand);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws NullPointerException if the list is null.
+     */
     @Override
     public void addCards(final List<Card> cards) {
         Objects.requireNonNull(cards);
         hand.addAll(cards);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getId() {
         return id;
     }
 
+    /**
+     * {@inheritDoc}
+     * Updates the internal state. If valid, the card is removed from hand.
+     * If invalid, it is added to the rejected set to avoid retrying it immediately.
+     *
+     * @throws NullPointerException  if cardPlayed is null.
+     * @throws IllegalStateException if a validated card is not found in hand.
+     */
     @Override
     public void notifyMoveResult(final Card cardPlayed, final boolean valid) {
         Objects.requireNonNull(cardPlayed);
-        if (!valid) {
-            rejectedCards.add(cardPlayed);
+        /* If it's a Wild the bot holds it as BLACK.
+             else use the card as is. */
+        final Card cardInHand;
+        if (cardPlayed.isNativeBlack()) {
+            cardInHand = cardPlayed.withColor(Color.BLACK);
         } else {
-            if (!hand.contains(cardPlayed)) {
-                throw new IllegalStateException("The card validated is not present in the hand");
-            }
-            hand.remove(cardPlayed);
+            cardInHand = cardPlayed;
+        }
+        if (!hand.contains(cardInHand)) {
+            throw new IllegalStateException("The card validated is not present in the hand: " + cardPlayed);
+        }
+        if (!valid) {
+            rejectedCards.add(cardInHand);
+        } else { // If the card is valid, remove the first occurrence from the hand and end the turn
+            hand.remove(cardInHand);
             rejectedCards.clear();
         }
     }
@@ -103,9 +145,7 @@ public final class Bot implements Player {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         final Bot bot = (Bot) o;
-
         return id == bot.id;
     }
 

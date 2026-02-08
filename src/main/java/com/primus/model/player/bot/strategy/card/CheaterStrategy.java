@@ -18,28 +18,34 @@ import java.util.Optional;
  * allowing it to make decisions based on the opponent's current hand.
  */
 public final class CheaterStrategy implements CardStrategy {
-
     private static final long SCORE_SKIP_REVERSE = 10L;
     private static final long SCORE_DRAW_TWO = 15L;
     private static final long SCORE_WILD = 25L;
-    private static final long SCORE_DEFENDABLE_MOVE = Long.MIN_VALUE;
+    private static final long SCORE_DEFENDABLE_MOVE = -1_000_000L;
     private static final long SCORE_NORMAL_CARD = 1L;
-
     private final OpponentInfo victim;
 
     /**
      * Constructs a CheaterStrategy targeting a specific opponent.
      *
-     * @param victim the {@link OpponentInfo} describing the opponent to target
-     * @throws NullPointerException if {@code victim} is {@code null}
+     * @param victim the {@link OpponentInfo} describing the opponent to target.
+     * @throws NullPointerException if {@code victim} is {@code null}.
      */
     public CheaterStrategy(final OpponentInfo victim) {
-        Objects.requireNonNull(victim);
+        Objects.requireNonNull(victim, "Victim info cannot be null");
         this.victim = victim;
     }
 
+    /**
+     * {@inheritDoc}
+     * Analyzes the victim's hand and selects the card that maximizes the damage
+     * or minimizes the victim's chance to close the game.
+     *
+     * @throws NullPointerException if {@code possibleCard} is {@code null}.
+     */
     @Override
     public Optional<Card> chooseCard(final List<Card> possibleCards) {
+        Objects.requireNonNull(possibleCards);
         final VictimAnalysis victimAnalysis = analyzeVictimHand();
         return possibleCards.stream()
                 .max(Comparator.comparingLong(card -> calculateScore(card, victimAnalysis)));
@@ -65,7 +71,6 @@ public final class CheaterStrategy implements CardStrategy {
             }
             return SCORE_WILD * calculateUrgencyMultiplier(victimAnalysis);
         }
-        // normal wild
         return SCORE_WILD;
     }
 
@@ -89,7 +94,6 @@ public final class CheaterStrategy implements CardStrategy {
         final List<Card> hand = victim.getHand();
         final Map<Color, Integer> colorMap = new EnumMap<>(Color.class);
         final Map<Values, Integer> valuesMap = new EnumMap<>(Values.class);
-
         for (final Card card : hand) {
             if (!card.isNativeBlack()) {
                 colorMap.put(card.getColor(), colorMap.getOrDefault(card.getColor(), 0) + 1);
