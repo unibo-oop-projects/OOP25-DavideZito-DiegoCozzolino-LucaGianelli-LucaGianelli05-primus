@@ -1,14 +1,19 @@
 package com.primus.model.core;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
+import java.util.Objects;
 
 /**
- * Implementation of the Scheduler interface to manage player turns. It supports
+ * Implementation of the {@link Scheduler} to manage player turns. It supports
  * clockwise and counter-clockwise turn orders, as well as skipping turns.
  */
 public final class SchedulerImpl implements Scheduler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerImpl.class);
+
     private final List<Integer> playersIDs;
     private int currentIndex;
     private boolean isClockwise = true;
@@ -19,9 +24,11 @@ public final class SchedulerImpl implements Scheduler {
     public SchedulerImpl(final Set<Integer> playerIDs) {
         Objects.requireNonNull(playerIDs);
         if (playerIDs.isEmpty()) {
+            LOGGER.error("Failed to initialize Scheduler: Zero players provided.");
             throw new IllegalArgumentException("Zero players provided to Scheduler");
         }
         this.playersIDs = List.copyOf(playerIDs);
+        LOGGER.info("Scheduler initialized with {} players. Order: {}", playersIDs.size(), playersIDs);
     }
 
     @Override
@@ -32,16 +39,19 @@ public final class SchedulerImpl implements Scheduler {
     @Override
     public int nextPlayer() {
         moveIndex();
+        LOGGER.debug("Turn passed to player ID: {}", playersIDs.get(currentIndex));
         return playersIDs.get(currentIndex);
     }
 
     @Override
     public void reverseDirection() {
+        LOGGER.info("Game direction reversed. Clockwise: {}", isClockwise);
         isClockwise = !isClockwise;
     }
 
     @Override
     public void skipTurn() {
+        LOGGER.info("Turn skipped for player ID: {}", playersIDs.get(currentIndex));
         moveIndex();
     }
 

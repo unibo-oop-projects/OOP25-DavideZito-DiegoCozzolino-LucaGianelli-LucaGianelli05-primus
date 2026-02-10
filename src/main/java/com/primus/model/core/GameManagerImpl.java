@@ -16,6 +16,8 @@ import com.primus.utils.GameState;
 import com.primus.utils.PlayerSetupData;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ import java.util.Objects;
  * {@link com.primus.controller.GameController}
  */
 public final class GameManagerImpl implements GameManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GameManagerImpl.class);
     private static final int CARD_NUMBER = 7;
 
     private final Map<Integer, Player> players;
@@ -53,6 +56,8 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public void init() {
+        LOGGER.info("Initializing Game Manager");
+
         discardPile = new PrimusDropPile();
         deck = new PrimusDeck();
         deck.init();
@@ -66,10 +71,13 @@ public final class GameManagerImpl implements GameManager {
         players.put(2, botFactory.createImplacabilis(2));
         //this.players.add(botFactory.createFallax(3, HUMAN_PLAYER));
 
+        LOGGER.info("Players created: {}", players.keySet());
+
         // Create the scheduler by passing the players IDs to it
         scheduler = new SchedulerImpl(players.keySet());
 
         // Distribute cards
+        LOGGER.debug("Distributing {} cards to each player", CARD_NUMBER);
         for (final Player p : players.values()) {
             for (int i = 0; i < CARD_NUMBER; i++) {
                 final Card c = drawDeckCard();
@@ -78,7 +86,9 @@ public final class GameManagerImpl implements GameManager {
         }
 
         // Draw the start card
-        discardPile.addCard(drawDeckCard());
+        final Card startCard = drawDeckCard();
+        discardPile.addCard(startCard);
+        LOGGER.info("Game initialized. Start card: {}", startCard);
     }
 
     @Override
@@ -99,30 +109,39 @@ public final class GameManagerImpl implements GameManager {
     )
     @Override
     public Player nextPlayer() {
-        return players.get(scheduler.nextPlayer());
+        final int nextId = scheduler.nextPlayer();
+        LOGGER.debug("Scheduler advanced. Next player ID: {}", nextId);
+        return players.get(nextId);
     }
 
     @Override
     public boolean executeTurn(final Card card) {
+        final Player activePlayer = getActivePlayer();
+        LOGGER.debug("Executing turn for Player {}. Card played: {}", activePlayer.getId(), card);
+
         // If there's an active sanction, the player must resolve instead of playing a normal turn
         if (sanctioner.isActive()) {
-            return handleMalus(getActivePlayer(), card);
+            LOGGER.debug("Sanction is active. Delegating to handleMalus.");
+            return handleMalus(activePlayer, card);
         }
 
         // User chooses to draw a card
         if (card == null) {
-            drawCardForPlayer(getActivePlayer());
+            LOGGER.info("Player {} chose to draw a card.", activePlayer.getId());
+            drawCardForPlayer(activePlayer);
             return true;
         }
 
         // User plays a card, so it must be validated
         if (!validator.isValidCard(discardPile.peek(), card)) {
-            getActivePlayer().notifyMoveResult(card, false);
+            LOGGER.warn("Invalid move attempted by player {}: {} on {}", activePlayer.getId(), card, discardPile.peek());
+            activePlayer.notifyMoveResult(card, false);
             return false;
         }
 
         // Confirm the move and apply effects
-        getActivePlayer().notifyMoveResult(card, true);
+        LOGGER.info("Player {} played valid card: {}", activePlayer.getId(), card);
+        activePlayer.notifyMoveResult(card, true);
         discardPile.addCard(card);
 
         applyCardEffects(card);
@@ -132,7 +151,10 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public Optional<Integer> getWinner() {
-        return players.values().stream().filter(p -> p.getHand().isEmpty()).map(Player::getId).findFirst();
+        final Optional<Integer> winner = players.values().stream().filter(
+                p -> p.getHand().isEmpty()).map(Player::getId).findFirst();
+        winner.ifPresent(integer -> LOGGER.info("Winner found. Player ID: {}", integer));
+        return winner;
     }
 
     /**
@@ -145,8 +167,8 @@ public final class GameManagerImpl implements GameManager {
     /**
      * Handles the situation where a player is under a sanction (malus). The player can either
      * <ul>
-     *  <li>defend against the sanction by playing a valid {@link Card}</li>
-     *  <li>accept the sanction by drawing the required number of {@link Card}</li>
+     * <li>defend against the sanction by playing a valid {@link Card}</li>
+     * <li>accept the sanction by drawing the required number of {@link Card}</li>
      * </ul>
      * Trying to play an invalid card will result in a failed attempt.
      *
@@ -160,6 +182,7 @@ public final class GameManagerImpl implements GameManager {
         // Player chooses not to defend (probably he couldn't)
         if (card == null) {
             final int amount = sanctioner.getMalusAmount();
+            LOGGER.info("Player {} accepts malus. Drawing {} cards.", player.getId(), amount);
 
             // Apply malus
             for (int i = 0; i < amount; i++) {
@@ -172,6 +195,7 @@ public final class GameManagerImpl implements GameManager {
 
         // Player is defending against an active sanction
         if (sanctioner.isActive() && validator.isValidDefense(discardPile.peek(), card)) {
+            LOGGER.info("Player {} successfully defended with {}", player.getId(), card);
             player.notifyMoveResult(card, true);
             discardPile.addCard(card);
             applyCardEffects(card);
@@ -179,6 +203,7 @@ public final class GameManagerImpl implements GameManager {
         }
 
         // Invalid defense attempt
+        LOGGER.warn("Player {} failed to defend with invalid card: {}", player.getId(), card);
         player.notifyMoveResult(card, false);
         return false;
     }
@@ -190,6 +215,7 @@ public final class GameManagerImpl implements GameManager {
      */
     private Card drawDeckCard() {
         if (deck.isEmpty()) {
+            LOGGER.info("Deck is empty. Refilling from discard pile.");
             deck.refillFrom(discardPile);
         }
         return deck.drawCard();
@@ -204,6 +230,9 @@ public final class GameManagerImpl implements GameManager {
         final Card c = drawDeckCard();
         if (c != null) {
             player.addCards(List.of(c));
+        } else {
+            LOGGER.error("Deck is empty even after refill attempt. Player {} cannot draw.", player.getId());
+            throw new RuntimeException("Deck is empty and cannot be refilled. No cards available to draw.");
         }
     }
 
@@ -216,8 +245,14 @@ public final class GameManagerImpl implements GameManager {
         Objects.requireNonNull(card);
 
         switch (card.getValue()) {
-            case SKIP -> scheduler.skipTurn();
-            case REVERSE -> scheduler.reverseDirection();
+            case SKIP -> {
+                LOGGER.debug("Applying SKIP effect.");
+                scheduler.skipTurn();
+            }
+            case REVERSE -> {
+                LOGGER.debug("Applying REVERSE effect.");
+                scheduler.reverseDirection();
+            }
             default -> {
             }
         }

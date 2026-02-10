@@ -5,28 +5,27 @@ import com.primus.model.deck.Card;
 import com.primus.model.player.Player;
 import com.primus.view.GameView;
 
-import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-//TODO importare le classi non ancora create ma necessarie
-// import com.primus.model.player.Bot;
-
-// TODO gestire tutta interazione con la view
 
 /**
  * Implementation of {@link GameController} to manage the game loop and act as a bridge between view and model.
  */
 public final class GameControllerImpl implements GameController {
     private static final int BOT_DELAY = 1000;
+    private static final Logger LOGGER = LoggerFactory.getLogger(GameControllerImpl.class);
 
     private final GameManager manager;
     private final List<GameView> views = new ArrayList<>();
     private CompletableFuture<Card> humanInputFuture;
 
-    // Flag to control the game loop, useful for stopping the game gracefully
     private volatile boolean isRunning;
 
     /**
@@ -40,17 +39,23 @@ public final class GameControllerImpl implements GameController {
 
     @Override
     public void start() {
+        LOGGER.info("Starting GameController");
         this.isRunning = true;
         manager.init();
+        LOGGER.debug("GameManager initialized");
 
         for (final GameView v : views) {
-            v.initGame(manager.getGameSetup()); //TOdo li chiamo qui o nel addview
+            v.initGame(manager.getGameSetup());
             v.updateView(manager.getGameState());
         }
+
+        LOGGER.info("Game loop is starting");
 
         // Game Loop
         while (manager.getWinner().isEmpty() && isRunning) {
             final Player currentPlayer = manager.nextPlayer();
+
+            LOGGER.debug("Starting turn for player with ID: {}", currentPlayer.getId());
 
             for (final GameView v : views) {
                 v.showCurrentPlayer(currentPlayer.getId());
@@ -71,19 +76,22 @@ public final class GameControllerImpl implements GameController {
 
         if (manager.getWinner().isPresent()) {
             //TODO gestire vittoria
-
             for (final GameView v : views) {
+                LOGGER.info("Game ended. Winner: {}", manager.getWinner().get());
                 v.showMessage("PARTITA TERMINATA!");
             }
-
+        } else {
+            LOGGER.warn("Game ended without a winner");
         }
     }
 
     @Override
     public void stop() {
+        LOGGER.info("Game loop stop requested");
         this.isRunning = false;
         if (this.humanInputFuture != null && !this.humanInputFuture.isDone()) {
             this.humanInputFuture.cancel(true);
+            LOGGER.debug("Cancelling human input future");
         }
     }
 
@@ -94,20 +102,25 @@ public final class GameControllerImpl implements GameController {
         view.setCardPlayedListener(this::humanPlayedCard);
         view.setDrawListener(this::humanDrewCard);
 
-        //view.initGame(manager.getGameSetup());
-        //view.updateView(manager.getGameState());
+        LOGGER.debug("New view added to controller");
     }
 
     @Override
     public void humanPlayedCard(final Card card) {
         Objects.requireNonNull(card);
+
+        LOGGER.debug("Callback View: Human player wants to play {}", card);
+
         if (this.humanInputFuture != null && !this.humanInputFuture.isDone()) {
             this.humanInputFuture.complete(card);
+        } else {
+            LOGGER.warn("Received unexpected input from the human player");
         }
     }
 
     @Override
     public void humanDrewCard() {
+        LOGGER.debug("Callback View: Human player drawed a card");
         if (this.humanInputFuture != null && !this.humanInputFuture.isDone()) {
             this.humanInputFuture.complete(null);
         }
@@ -122,6 +135,8 @@ public final class GameControllerImpl implements GameController {
         Objects.requireNonNull(player);
         boolean turnCompleted = false;
 
+        LOGGER.debug("Shift started for the BOT ID: {}", player.getId());
+
         // Loop until the bot completes its turn in a valid way
         while (!turnCompleted) {
             sleep(); // Little delay for realism
@@ -131,6 +146,7 @@ public final class GameControllerImpl implements GameController {
 
             // Bot decides to draw a card
             if (intention.isEmpty()) {
+                LOGGER.info("BOT {} drawed a car.", player.getId());
                 manager.executeTurn(null);
                 for (final GameView v : views) {
                     v.showMessage(player.getId() + " ha pescato.");
@@ -141,16 +157,21 @@ public final class GameControllerImpl implements GameController {
                 // Bot decides to play a card
                 final Card cardToPlay = intention.get();
 
+                LOGGER.info("BOT {} trying to play {}", player.getId(), cardToPlay);
+
                 // Try to execute the turn with the chosen card
                 final boolean moveAccepted = manager.executeTurn(cardToPlay);
 
                 if (moveAccepted) {
+                    LOGGER.debug("Move accepted");
                     for (final GameView v : views) {
                         v.showMessage(player.getId() + " gioca " + cardToPlay);
                     }
                     turnCompleted = true;
+                } else {
+                    // If move not accepted, bot must choose again
+                    LOGGER.warn("BOT move rejected: {} tried to play {}.", player.getId(), cardToPlay);
                 }
-                // If move not accepted, bot must choose again
             }
         }
         for (final GameView v : views) {
@@ -167,6 +188,8 @@ public final class GameControllerImpl implements GameController {
         Objects.requireNonNull(player);
         boolean turnCompleted = false;
 
+        LOGGER.debug("Waiting an input from human player");
+
         for (final GameView v : views) {
             v.showMessage("Turno di human player");
         }
@@ -178,12 +201,16 @@ public final class GameControllerImpl implements GameController {
                 // Await user input (either play a card or draw) from the view
                 final Card chosenCard = this.humanInputFuture.get();
 
+                LOGGER.debug("Processing human move: {}", chosenCard == null ? "Draw a card" : chosenCard);
+
                 // Try to execute the turn with the chosen card (null if drawing)
                 final boolean moveAccepted = manager.executeTurn(chosenCard);
 
                 if (moveAccepted) {
+                    LOGGER.info("Human move accepted");
                     turnCompleted = true;
                 } else {
+                    LOGGER.info("Human move rejected. A new move is requested");
                     for (final GameView v : views) {
                         v.showError("Mossa non valida! Riprova.");
                     }
@@ -192,10 +219,12 @@ public final class GameControllerImpl implements GameController {
 
             } catch (InterruptedException | ExecutionException e) {
                 // If thread is interrupted the game should stop gracefully
+                LOGGER.error("Crtitical error during human shift (Thread interrupted or ExecutionException)", e);
                 stop();
                 Thread.currentThread().interrupt();
             } catch (final java.util.concurrent.CancellationException e) {
                 // Future was cancelled
+                LOGGER.info("Human waiting cancelled (game probably has been stopped)");
                 stop();
             }
         }
@@ -208,6 +237,7 @@ public final class GameControllerImpl implements GameController {
         try {
             Thread.sleep(GameControllerImpl.BOT_DELAY);
         } catch (final InterruptedException e) {
+            LOGGER.error("BOT sleep interrupted", e);
             Thread.currentThread().interrupt();
         }
     }

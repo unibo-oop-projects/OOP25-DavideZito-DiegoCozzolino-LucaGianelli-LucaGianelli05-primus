@@ -4,6 +4,9 @@ import com.primus.model.deck.Card;
 import com.primus.utils.GameState;
 import com.primus.utils.PlayerSetupData;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Queue;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -43,7 +46,7 @@ import javax.swing.border.LineBorder;
  * displaying the players, their hands, the central table with the deck and discard pile, and status messages.
  */
 public final class PrimusGameView extends JFrame implements GameView {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrimusGameView.class);
     private static final float SCREEN_PERCENTAGE = 0.75F;
     private static final int START_CARDS = 7;
 
@@ -65,12 +68,15 @@ public final class PrimusGameView extends JFrame implements GameView {
      */
     public PrimusGameView() {
         super("Primus - The Game");
+        LOGGER.info("Initializing PrimusGameView");
+
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Dynamic sizing based on screen dimensions
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         final int width = (int) (screenSize.width * SCREEN_PERCENTAGE);
         final int height = (int) (screenSize.height * SCREEN_PERCENTAGE);
+        LOGGER.debug("Setting window size to {}x{}", width, height);
 
         this.setSize(width, height);
         this.setMinimumSize(new Dimension(width / 2, height / 2));
@@ -80,14 +86,15 @@ public final class PrimusGameView extends JFrame implements GameView {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (final ClassNotFoundException | InstantiationException
-                | IllegalAccessException | UnsupportedLookAndFeelException ignored) {
+                       | IllegalAccessException | UnsupportedLookAndFeelException ignored) {
+            LOGGER.warn("Could not set System LookAndFeel. Using default");
             // If we can't set the system look and feel, we just use the default one
         }
 
         // Plauer panels
         this.playerNorth = new PlayerPanel("Bot Top", FlowLayout.CENTER);
         this.playerSouth = new PlayerPanel("Human Player", FlowLayout.CENTER);
-        this.playerWest = new PlayerPanel("Bot Left", -1); // -1 indica verticale custom
+        this.playerWest = new PlayerPanel("Bot Left", -1);
         this.playerEast = new PlayerPanel("Bot Right", -1);
 
         this.tablePanel = new TablePanel();
@@ -98,16 +105,17 @@ public final class PrimusGameView extends JFrame implements GameView {
         this.add(playerEast, BorderLayout.EAST);
         this.add(tablePanel, BorderLayout.CENTER);
 
-        // Centra la finestra nello schermo
         this.setLocationRelativeTo(null);
 
         this.setVisible(true);
+        LOGGER.info("View visible");
     }
 
     @Override
     public void initGame(final List<PlayerSetupData> players) {
         SwingUtilities.invokeLater(() -> {
             Objects.requireNonNull(players);
+            LOGGER.info("Starting visual game setup for {} players", players.size());
 
             panelMap.clear();
             humanPlayerID = null;
@@ -126,18 +134,20 @@ public final class PrimusGameView extends JFrame implements GameView {
                     // Human is always assigned to the South panel
                     assignedPanel = playerSouth;
                     assignedPanel.setName(p.id() + " (Tu)");
-                    System.out.println("UMANO");
+
                     // Saving human player ID for turn management
                     this.humanPlayerID = p.id();
+                    LOGGER.info("Human player identified: ID {}", p.id());
                 } else {
                     // Bots are assigned to the remaining panels
                     assignedPanel = botSlots.poll();
                     if (assignedPanel != null) {
                         assignedPanel.setName(String.valueOf(p.id()));
                         assignedPanel.updateHandBot(START_CARDS);
+                        LOGGER.debug("Bot ID {} assigned to panel", p.id());
                     } else {
+                        LOGGER.error("Too many players provided. No slots left for ID {}", p.id());
                         throw new IllegalStateException("More players provided than available bot slots");
-                        //TODO sarebbe da loggare un caso di forniti maggior numero di giocatori di quelli previsti
                     }
                 }
                 panelMap.put(p.id(), assignedPanel);
@@ -164,11 +174,13 @@ public final class PrimusGameView extends JFrame implements GameView {
     @Override
     public void setCardPlayedListener(final Consumer<Card> listener) {
         cardPlayedListener = listener;
+        LOGGER.debug("CardPlayedListener registered");
     }
 
     @Override
     public void setDrawListener(final Runnable listener) {
         drawListener = listener;
+        LOGGER.debug("DrawListener registered");
     }
 
     @Override
@@ -176,6 +188,7 @@ public final class PrimusGameView extends JFrame implements GameView {
         SwingUtilities.invokeLater(() -> {
 
             final int currentId = gameState.playerId();
+            LOGGER.debug("Updating view. Active Player ID: {}", currentId);
 
             final boolean isHumanTurn = currentId == this.humanPlayerID;
 
@@ -189,8 +202,8 @@ public final class PrimusGameView extends JFrame implements GameView {
                     activePanel.updateHandBot(gameState.activeHand().size());
                 }
             } else {
-                throw new IllegalArgumentException();
-                //TODO sarebbe da loggare che è stato fornito un id sconosciuto
+                LOGGER.error("Received update for unknown Player ID: {}", currentId);
+                throw new IllegalArgumentException("Unknown Player ID in GameState: " + currentId);
             }
 
             tablePanel.setTopCard(gameState.topCard());
@@ -220,9 +233,10 @@ public final class PrimusGameView extends JFrame implements GameView {
 
     @Override
     public void showError(final String errorMessage) {
-        SwingUtilities.invokeLater(() ->
-                JOptionPane.showMessageDialog(this, errorMessage, "Attention", JOptionPane.WARNING_MESSAGE)
-        );
+        SwingUtilities.invokeLater(() -> {
+            LOGGER.warn("Showing UI Error: {}", errorMessage);
+            JOptionPane.showMessageDialog(this, errorMessage, "Attention", JOptionPane.WARNING_MESSAGE);
+        });
     }
 
     // Graphical components definitions
@@ -241,7 +255,7 @@ public final class PrimusGameView extends JFrame implements GameView {
          * Constructor for PlayerPanel.
          *
          * @param defaultName the name to display for the player (e.g., "Player 1", "Bot 1")
-         * @param flowAlign the alignment for the card layout; if -1, a vertical layout is used
+         * @param flowAlign   the alignment for the card layout; if -1, a vertical layout is used
          *                  otherwise a horizontal FlowLayout with the specified alignment
          */
         PlayerPanel(final String defaultName, final int flowAlign) {
@@ -289,7 +303,7 @@ public final class PrimusGameView extends JFrame implements GameView {
          * Updates the hand of the player by displaying the front of the cards. If interactable is true
          * the cards will be clickable.
          *
-         * @param hand the list of cards in the player's hand to be displayed
+         * @param hand         the list of cards in the player's hand to be displayed
          * @param interactable true if the cards should be clickable
          */
         public void updateHand(final List<Card> hand, final boolean interactable) {
@@ -304,6 +318,7 @@ public final class PrimusGameView extends JFrame implements GameView {
                         @Override
                         public void mouseClicked(final MouseEvent e) {
                             if (cardPlayedListener != null) {
+                                LOGGER.debug("User clicked card: {}", c);
                                 cardPlayedListener.accept(c);
                             }
                         }
@@ -361,6 +376,7 @@ public final class PrimusGameView extends JFrame implements GameView {
                 @Override
                 public void mouseClicked(final MouseEvent e) {
                     if (drawListener != null) {
+                        LOGGER.debug("User clicked deck to draw.");
                         drawListener.run();
                     }
                 }
@@ -428,12 +444,12 @@ public final class PrimusGameView extends JFrame implements GameView {
             if (card != null) {
 
                 g2.setColor(Color.WHITE);
-                g2.fillRoundRect(0, 0, W-1, H-1, 12, 12);
+                g2.fillRoundRect(0, 0, W - 1, H - 1, 12, 12);
                 g2.setColor(Color.BLACK);
-                g2.drawRoundRect(0, 0, W-1, H-1, 12, 12);
+                g2.drawRoundRect(0, 0, W - 1, H - 1, 12, 12);
 
                 g2.setColor(mapColor(card.getColor()));
-                g2.fillRoundRect(6, 6, W-13, H-13, 8, 8);
+                g2.fillRoundRect(6, 6, W - 13, H - 13, 8, 8);
 
                 g2.setColor(Color.WHITE);
                 g2.setFont(new Font("Arial", Font.BOLD, 28));
@@ -450,11 +466,11 @@ public final class PrimusGameView extends JFrame implements GameView {
 
             } else {
                 g2.setColor(new Color(60, 60, 60));
-                g2.fillRoundRect(0, 0, W-1, H-1, 12, 12);
+                g2.fillRoundRect(0, 0, W - 1, H - 1, 12, 12);
                 g2.setColor(Color.WHITE);
                 g2.setStroke(new BasicStroke(2));
-                g2.drawRoundRect(0, 0, W-1, H-1, 12, 12);
-                g2.drawOval(W/4, H/4, W/2, H/2);
+                g2.drawRoundRect(0, 0, W - 1, H - 1, 12, 12);
+                g2.drawOval(W / 4, H / 4, W / 2, H / 2);
             }
         }
 
@@ -474,7 +490,6 @@ public final class PrimusGameView extends JFrame implements GameView {
             if (s.contains("BLACK") || s.contains("NERO")) return Color.BLACK;
             return Color.GRAY;
         }
-
         /**
          * Formats the card's value (which is an enum) into a string representation for display.
          *

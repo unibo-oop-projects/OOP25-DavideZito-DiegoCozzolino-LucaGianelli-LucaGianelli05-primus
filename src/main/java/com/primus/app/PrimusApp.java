@@ -6,11 +6,15 @@ import com.primus.model.core.GameManager;
 import com.primus.model.core.GameManagerImpl;
 import com.primus.view.GameView;
 import com.primus.view.PrimusGameView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * App entry point.
  */
 public final class PrimusApp {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrimusApp.class);
 
     /**
      * Private constructor to prevent instantiation.
@@ -25,10 +29,24 @@ public final class PrimusApp {
      * @param args command line arguments
      */
     public static void main(final String[] args) {
+        LOGGER.info("========================================");
+        LOGGER.info("      Primus Application Starting       ");
+
+        LOGGER.debug("Initializing Core Components");
+
         final GameManager manager = new GameManagerImpl();
+        LOGGER.debug("Manager created");
+
         final GameView view = new PrimusGameView();
+        LOGGER.debug("View created.");
+
         final GameController controller = new GameControllerImpl(manager);
         controller.addView(view);
+        LOGGER.debug("Controller initialized and View wired");
+
+        LOGGER.info("Initialization complete. Starting Game Controller");
         controller.start();
+
+        LOGGER.info("Application finished gracefully.");
     }
 }
