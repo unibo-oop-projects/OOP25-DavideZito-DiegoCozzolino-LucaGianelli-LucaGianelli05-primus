@@ -5,6 +5,7 @@ import com.primus.model.deck.Deck;
 import com.primus.model.deck.DropPile;
 import com.primus.model.player.Player;
 import com.primus.model.player.bot.BotFactory;
+import com.primus.model.player.bot.HumanPlayer;
 import com.primus.model.rules.Sanctioner;
 import com.primus.model.rules.Validator;
 import com.primus.model.deck.PrimusDropPile;
@@ -24,8 +25,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Objects;
-// TODO aggiungere i veri import
-// import com.primus.model.player.HumanPlayer;
 
 /**
  * Implementation of {@link GameManager} to manage the game flow. It offers an API
@@ -65,11 +64,18 @@ public final class GameManagerImpl implements GameManager {
         sanctioner.reset();
         final BotFactory botFactory = new BotFactoryImpl();
 
-        // TODO: creare il giocatore umano e poi fornirlo a bot Fallax
+        // Create players and add them to the map using their own ID as key
+        final Player humanPlayer = new HumanPlayer(1);
+        players.put(humanPlayer.getId(), humanPlayer);
 
-        players.put(1, botFactory.createFortuitus(1));
-        players.put(2, botFactory.createImplacabilis(2));
-        //this.players.add(botFactory.createFallax(3, HUMAN_PLAYER));
+        final Player bot1 = botFactory.createFortuitus(2);
+        players.put(bot1.getId(), bot1);
+
+        final Player bot2 = botFactory.createImplacabilis(3);
+        players.put(bot2.getId(), bot2);
+
+        final Player bot3 = botFactory.createFallax(4, humanPlayer);
+        players.put(bot3.getId(), bot3);
 
         LOGGER.info("Players created: {}", players.keySet());
 
