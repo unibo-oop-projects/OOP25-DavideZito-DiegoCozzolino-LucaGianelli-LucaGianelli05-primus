@@ -44,10 +44,10 @@ public final class GameControllerImpl implements GameController {
         manager.init();
         LOGGER.debug("GameManager initialized");
 
-        for (final GameView v : views) {
+        views.forEach(v -> {
             v.initGame(manager.getGameSetup());
             v.updateView(manager.getGameState());
-        }
+        });
 
         LOGGER.info("Game loop is starting");
 
@@ -57,9 +57,7 @@ public final class GameControllerImpl implements GameController {
 
             LOGGER.debug("Starting turn for player with ID: {}", currentPlayer.getId());
 
-            for (final GameView v : views) {
-                v.showCurrentPlayer(currentPlayer.getId());
-            }
+            views.forEach(v -> v.showCurrentPlayer(currentPlayer.getId()));
 
             // Management of turn based on player type
             if (currentPlayer.isBot()) {
@@ -68,18 +66,14 @@ public final class GameControllerImpl implements GameController {
                 handleHumanTurn(currentPlayer);
             }
 
-            for (final GameView v : views) {
-                v.updateView(manager.getGameState());
-            }
+            views.forEach(v -> v.updateView(manager.getGameState()));
 
         }
 
         if (manager.getWinner().isPresent()) {
             //TODO gestire vittoria
-            for (final GameView v : views) {
-                LOGGER.info("Game ended. Winner: {}", manager.getWinner().get());
-                v.showMessage("PARTITA TERMINATA!");
-            }
+            LOGGER.info("Game ended. Winner: {}", manager.getWinner().get());
+            views.forEach(v -> v.showMessage("PARTITA TERMINATA!"));
         } else {
             LOGGER.warn("Game ended without a winner");
         }
@@ -148,9 +142,7 @@ public final class GameControllerImpl implements GameController {
             if (intention.isEmpty()) {
                 LOGGER.info("BOT {} drawed a car.", player.getId());
                 manager.executeTurn(null);
-                for (final GameView v : views) {
-                    v.showMessage(player.getId() + " ha pescato.");
-                }
+                views.forEach(v -> v.showMessage(player.getId() + " ha pescato."));
 
                 turnCompleted = true;
             } else {
@@ -164,9 +156,7 @@ public final class GameControllerImpl implements GameController {
 
                 if (moveAccepted) {
                     LOGGER.debug("Move accepted");
-                    for (final GameView v : views) {
-                        v.showMessage(player.getId() + " gioca " + cardToPlay);
-                    }
+                    views.forEach(v -> v.showMessage(player.getId() + " gioca " + cardToPlay));
                     turnCompleted = true;
                 } else {
                     // If move not accepted, bot must choose again
@@ -174,9 +164,7 @@ public final class GameControllerImpl implements GameController {
                 }
             }
         }
-        for (final GameView v : views) {
-            v.updateView(manager.getGameState());
-        }
+        views.forEach(v -> v.updateView(manager.getGameState()));
     }
 
     /**
@@ -190,9 +178,7 @@ public final class GameControllerImpl implements GameController {
 
         LOGGER.debug("Waiting an input from human player");
 
-        for (final GameView v : views) {
-            v.showMessage("Turno di human player");
-        }
+        views.forEach(v -> v.showMessage("Turno di human player"));
 
         while (!turnCompleted) {
             try {
@@ -211,9 +197,7 @@ public final class GameControllerImpl implements GameController {
                     turnCompleted = true;
                 } else {
                     LOGGER.info("Human move rejected. A new move is requested");
-                    for (final GameView v : views) {
-                        v.showError("Mossa non valida! Riprova.");
-                    }
+                    views.forEach(v -> v.showError("Mossa non valida! Riprova."));
                     // If move not accepted, human must choose again
                 }
 
