@@ -12,8 +12,6 @@ import java.util.Objects;
  */
 public final class SanctionerImpl implements Sanctioner {
     private static final Logger LOGGER = LoggerFactory.getLogger(SanctionerImpl.class);
-    private static final int DRAW_TWO_PENALTY = 2;
-    private static final int DRAW_FOUR_PENALTY = 4;
 
     /**
      * The current counter of cards to be drawn.
@@ -53,18 +51,9 @@ public final class SanctionerImpl implements Sanctioner {
     @Override
     public void accumulate(final Card card) {
         Objects.requireNonNull(card);
-        LOGGER.debug("Accumulating penalty for card: {}", card);
-        switch (card.getValue()) {
-            case DRAW_TWO -> {
-                LOGGER.info("Penalty updated (DRAW_4): total cards to draw = {}", malusAmount);
-                malusAmount += DRAW_TWO_PENALTY;
-            }
-            case WILD_DRAW_FOUR -> {
-                LOGGER.info("Penalty updated (DRAW_2): total cards to draw = {}", malusAmount);
-                malusAmount += DRAW_FOUR_PENALTY;
-            }
-            default -> LOGGER.info("Card ignored by Sanctioner: {}", card);
-        }
+        LOGGER.debug("Accumulating penalty for card: {} with {} to draw", card, card.getDrawAmount());
+        malusAmount += card.getDrawAmount();
+        LOGGER.info("Penalty updated total cards to draw = {}", malusAmount);
     }
 
     /**

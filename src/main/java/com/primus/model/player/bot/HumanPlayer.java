@@ -68,15 +68,13 @@ public final class HumanPlayer implements Player {
     @Override
     public void notifyMoveResult(final Card cardPlayed, final boolean valid) {
         Objects.requireNonNull(cardPlayed);
-
+        final Card cardInHand;
+        if (cardPlayed.isNativeBlack()) {
+            cardInHand = cardPlayed.withColor(Color.BLACK);
+        } else {
+            cardInHand = cardPlayed;
+        }
         if (valid) {
-            final Card cardInHand;
-            if (cardPlayed.isNativeBlack()) {
-                cardInHand = cardPlayed.withColor(Color.BLACK);
-            } else {
-                cardInHand = cardPlayed;
-            }
-
             if (hand.remove(cardInHand)) {
                 LOGGER.info("HumanPlayer (ID: {}) successfully played card: {}", id, cardPlayed);
             } else {
