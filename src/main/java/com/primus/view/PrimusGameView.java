@@ -505,7 +505,8 @@ public final class PrimusGameView extends JFrame implements GameView {
                 }
             });
 
-            discardView = new CardComponent(null); // todo Vuoto inizialmente?------------------------------------------
+            discardView = new CardComponent(null);
+            discardView.setVisible(false); // Initially hidden until the first card is played
 
             centerZone.add(deckView);
             centerZone.add(discardView);
@@ -521,6 +522,7 @@ public final class PrimusGameView extends JFrame implements GameView {
         public void setTopCard(final Card c) {
             centerZone.remove(discardView);
             discardView = new CardComponent(c);
+            discardView.setVisible(true);
             centerZone.add(discardView);
             centerZone.revalidate();
             centerZone.repaint();
