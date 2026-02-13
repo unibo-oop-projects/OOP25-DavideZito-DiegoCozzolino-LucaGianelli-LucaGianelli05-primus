@@ -1,5 +1,8 @@
 package com.primus.model.deck;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +25,9 @@ import java.util.Set;
  *
  */
 public class DeckFileReader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeckFileReader.class);
+
     private static final String COMMENT_PREFIX = "#";
     private static final String SEPARATOR = ",";
     private static final String EFFECTS_SEPARATOR = "\\|"; // | pipe separator for multiple effects
@@ -37,12 +43,15 @@ public class DeckFileReader {
      * @throws IllegalArgumentException if the file is not found or has an invalid format.
      * @throws IllegalStateException    if the file cannot be read due to an I/O error or parsing failure.
      */
-    public List<Card> loadDeck(final String fileName) {
+    public List<Card> loadDeck(final String fileName) throws IOException {
         final List<Card> cards = new ArrayList<>();
         Objects.requireNonNull(fileName, "File name must not be null");
 
+        LOGGER.info("Starting to load deck from file: {}", fileName);
+
         try (InputStream is = getClass().getClassLoader().getResourceAsStream(fileName)) {
             if (is == null) {
+                LOGGER.error("Deck configuration file not found: {}", fileName);
                 throw new IllegalArgumentException("File not found: " + fileName);
             }
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
@@ -61,14 +70,18 @@ public class DeckFileReader {
                     try {
                         cards.addAll(parseLine(cleanLine));
                     } catch (final IllegalArgumentException e) {
+                        LOGGER.error("Format error in deck file {}: {}", fileName, e.getMessage());
                         throw new IllegalArgumentException("Error parsing file " + fileName
                                 + ": " + e.getMessage(), e);
                     }
                 }
             }
         } catch (final IOException e) {
+            LOGGER.error("I/O error while reading deck file {}: {}", fileName, e.getMessage());
             throw new IllegalStateException("Failed to load the deck from file " + fileName, e);
         }
+
+        LOGGER.info("Deck loaded successfully from file: {}. Total cards parsed: {}", fileName, cards.size());
         return cards;
     }
 

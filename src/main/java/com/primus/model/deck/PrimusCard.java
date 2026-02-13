@@ -1,5 +1,8 @@
 package com.primus.model.deck;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
@@ -9,6 +12,9 @@ import java.util.Set;
  */
 
 public final class PrimusCard implements Card {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrimusCard.class);
+
     private final Color color;
     private final Values value;
 
@@ -30,6 +36,11 @@ public final class PrimusCard implements Card {
         this.value = Objects.requireNonNull(value, "Value cannot be null");
         this.drawAmount = Math.max(0, drawAmount);
         this.effects = effects == null ? Collections.emptySet() : Set.copyOf(effects);
+
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Created PrimusCard: color={}, value={}, drawAmount={}, effects={}",
+                    this.color, this.value, this.drawAmount, this.effects);
+        }
     }
 
     /**
@@ -93,6 +104,7 @@ public final class PrimusCard implements Card {
             return this;
         }
 
+        LOGGER.debug("Morphing card {} to new color {}", this, newColor);
         return new PrimusCard(newColor, this.value, this.drawAmount, this.effects);
     }
 

@@ -99,6 +99,8 @@ public final class PrimusGameView extends JFrame implements GameView {
     /**
      * Constructor sets up the main game window and initializes the UI components. It configures the layout to have
      * a central table and four player panels around it, and applies a simple styling.
+     *
+     * @param imageLoader the ImageLoader instance used to load card images for rendering; must not be null
      */
     public PrimusGameView(final ImageLoader imageLoader) {
         super("Primus - The Game");
