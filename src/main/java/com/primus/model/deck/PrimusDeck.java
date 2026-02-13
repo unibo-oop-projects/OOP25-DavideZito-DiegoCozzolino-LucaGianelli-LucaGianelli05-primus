@@ -19,6 +19,7 @@ public final class PrimusDeck implements Deck {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrimusDeck.class);
     private String configFileName;
     private final List<Card> cards;
+    private boolean isInitialized;
 
     /**
      * Constructs a PrimusDeck with the default configuration file.
@@ -31,6 +32,8 @@ public final class PrimusDeck implements Deck {
     @Override
     public void init() {
         LOGGER.info("Initializing PrimusDeck...");
+        isInitialized = true;
+
         this.cards.clear();
         try {
             final DeckFileReader loader = new DeckFileReader();
@@ -62,17 +65,20 @@ public final class PrimusDeck implements Deck {
 
     @Override
     public void shuffle() {
+        ensureInitialized();
         LOGGER.debug("Shuffling the deck containing {} cards.", this.cards.size());
         Collections.shuffle(this.cards);
     }
 
     @Override
     public boolean isEmpty() {
+        ensureInitialized();
         return this.cards.isEmpty();
     }
 
     @Override
     public Card drawCard() {
+        ensureInitialized();
         if (this.cards.isEmpty()) {
             LOGGER.warn("Attempted to draw a card from an empty deck.");
             throw new IllegalStateException("Deck is empty, call the refillFrom() method before drawing");
@@ -87,6 +93,7 @@ public final class PrimusDeck implements Deck {
 
     @Override
     public Card drawStartCard() {
+        ensureInitialized();
         LOGGER.debug("Searching for a safe starting card in the deck...");
         if (this.cards.isEmpty()) {
             LOGGER.error("Deck is empty when attempting to draw a starting card.");
@@ -120,6 +127,7 @@ public final class PrimusDeck implements Deck {
 
     @Override
     public void refillFrom(final DropPile discardPile) {
+        ensureInitialized();
         Objects.requireNonNull(discardPile, "DropPile cannot be null");
         LOGGER.info("Deck is empty. Refilling from discard pile...");
         final List<Card> recycledCards = discardPile.extractAllExceptTop();
@@ -140,6 +148,20 @@ public final class PrimusDeck implements Deck {
      * @return the number of cards in the deck
      */
     public int size() {
+        ensureInitialized();
         return this.cards.size();
+    }
+
+    /**
+     * Ensures that the deck has been initialized before performing operations.
+     *
+     * @throws IllegalStateException if the deck is not initialized
+     */
+    private void ensureInitialized() {
+        if (!isInitialized) {
+            LOGGER.error("Attempted to perform operation on uninitialized PrimusDeck");
+            throw new IllegalStateException("PrimusDeck must be initialized before performing this operation. "
+                    + "Call init() first.");
+        }
     }
 }

@@ -41,6 +41,7 @@ class PrimusDeckTest {
     @BeforeEach
     void setUp() {
         deck = new PrimusDeck();
+        deck.init();
         dropPile = new PrimusDropPile();
 
         deck.init();

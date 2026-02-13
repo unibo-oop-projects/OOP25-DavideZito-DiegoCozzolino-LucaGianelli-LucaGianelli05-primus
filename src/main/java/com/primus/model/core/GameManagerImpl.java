@@ -42,6 +42,7 @@ public final class GameManagerImpl implements GameManager {
     private Deck deck;
     private DropPile discardPile;
     private Scheduler scheduler;
+    private boolean isInitialized;
     private GameEvent currentEvent; //NOPMD - This field is necessary to keep track of the current game event
 
     /**
@@ -52,12 +53,13 @@ public final class GameManagerImpl implements GameManager {
         sanctioner = new SanctionerImpl();
         validator = new ValidatorImpl();
         players = new HashMap<>();
-        init(); // Ensure the game is initialized upon creation
     }
 
     @Override
     public void init() {
         LOGGER.info("Initializing Game Manager");
+
+        isInitialized = true;
 
         currentEvent = GameEvent.getRandomEvent();
         LOGGER.info("Selected Game Event: {} - {}", currentEvent, currentEvent.getDescription());
@@ -108,6 +110,7 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public GameState getGameState() {
+        ensureInitialized();
         final Map<Integer, Integer> cardCounts = new HashMap<>();
 
         players.values().forEach(player -> cardCounts.put(player.getId(), player.getHand().size()));
@@ -129,6 +132,7 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public List<PlayerSetupData> getGameSetup() {
+        ensureInitialized();
         return scheduler.getPlayersDisposition().stream()
                 .map(id -> {
                     final Player p = players.get(id);
@@ -139,6 +143,7 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public Player nextPlayer() {
+        ensureInitialized();
         final int nextId = scheduler.nextPlayer();
         LOGGER.debug("Scheduler advanced. Next player ID: {}", nextId);
         return players.get(nextId);
@@ -146,6 +151,7 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public boolean executeTurn(final Card card) {
+        ensureInitialized();
         final Player activePlayer = getActivePlayer();
         LOGGER.debug("Executing turn for Player {}. Card played: {}", activePlayer.getId(), card);
 
@@ -181,6 +187,7 @@ public final class GameManagerImpl implements GameManager {
 
     @Override
     public Optional<Integer> getWinner() {
+        ensureInitialized();
         final Optional<Integer> winner = players.values().stream().filter(
                 p -> p.getHand().isEmpty()).map(Player::getId).findFirst();
         winner.ifPresent(integer -> LOGGER.info("Winner found. Player ID: {}", integer));
@@ -192,6 +199,19 @@ public final class GameManagerImpl implements GameManager {
      */
     private Player getActivePlayer() {
         return Objects.requireNonNull(players.get(scheduler.getCurrentPlayer()));
+    }
+
+    /**
+     * Ensures that the game manager has been initialized before performing operations.
+     *
+     * @throws IllegalStateException if the game manager is not initialized
+     */
+    private void ensureInitialized() {
+        if (!isInitialized) {
+            LOGGER.error("Attempted to perform operation on uninitialized GameManager");
+            throw new IllegalStateException("GameManager must be initialized before performing this operation. "
+                    + "Call init() first.");
+        }
     }
 
     /**

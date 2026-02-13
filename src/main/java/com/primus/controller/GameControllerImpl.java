@@ -45,6 +45,8 @@ public final class GameControllerImpl implements GameController {
         this.isRunning = true;
         LOGGER.debug("GameManager initialized");
 
+        manager.init();
+
         views.forEach(v -> {
             v.initGame(manager.getGameSetup());
             v.updateView(manager.getGameState());
