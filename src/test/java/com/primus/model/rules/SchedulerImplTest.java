@@ -33,6 +33,8 @@ class SchedulerImplTest {
     void testNextPlayerClockwise() {
         assertEquals(1, scheduler.getCurrentPlayer(), "Initial player should be 1");
 
+        assertEquals(1, scheduler.nextPlayer(), "First turn should belong to 1");
+
         assertEquals(2, scheduler.nextPlayer(), "Next player should be 2");
 
         assertEquals(3, scheduler.nextPlayer(), "Next player should be 3");
@@ -45,9 +47,11 @@ class SchedulerImplTest {
     void testReverseDirection() {
         scheduler.reverseDirection();
 
-        assertEquals(3, scheduler.nextPlayer(), "Should go backwards to player 3");
+        assertEquals(1, scheduler.nextPlayer(), "First turn should belong to 1");
 
-        assertEquals(2, scheduler.nextPlayer(), "Should continue backwards to player 2");
+        assertEquals(3, scheduler.nextPlayer(), "Should continue backwards to player 3");
+
+        assertEquals(2, scheduler.nextPlayer(), "Should loop backwards to player 2");
 
         assertEquals(1, scheduler.nextPlayer(), "Should loop backwards to player 1");
     }
@@ -56,14 +60,16 @@ class SchedulerImplTest {
     @DisplayName("Double reverse doesn't break the sequence")
     void testDoubleReverse() {
         scheduler.reverseDirection();
-        scheduler.reverseDirection(); // Here normal
+        scheduler.reverseDirection();
 
+        assertEquals(1, scheduler.nextPlayer(), "First turn 1");
         assertEquals(2, scheduler.nextPlayer(), "Should behave normally after double reverse");
     }
 
     @Test
     @DisplayName("Skip a player turn")
     void testSkipTurn() {
+        assertEquals(1, scheduler.nextPlayer());
 
         scheduler.skipTurn();
 
@@ -74,6 +80,8 @@ class SchedulerImplTest {
     @DisplayName("Skip a player while reverse")
     void testSkipTurnInReverse() {
         scheduler.reverseDirection();
+
+        assertEquals(1, scheduler.nextPlayer());
 
         scheduler.skipTurn();
 

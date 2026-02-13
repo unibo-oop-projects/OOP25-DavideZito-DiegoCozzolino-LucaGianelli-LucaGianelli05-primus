@@ -15,7 +15,7 @@ public final class SchedulerImpl implements Scheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerImpl.class);
 
     private final List<Integer> playersIDs;
-    private int currentIndex;
+    private int currentIndex = -1;
     private boolean isClockwise = true;
 
     /**
@@ -33,7 +33,8 @@ public final class SchedulerImpl implements Scheduler {
 
     @Override
     public int getCurrentPlayer() {
-        return this.playersIDs.get(this.currentIndex);
+        // If currentIndex is -1, it means the game has not started yet, so we return the first player
+        return currentIndex == -1 ? this.playersIDs.getFirst() : this.playersIDs.get(this.currentIndex);
     }
 
     @Override
@@ -64,6 +65,12 @@ public final class SchedulerImpl implements Scheduler {
      * Moves the current index based on the turn order direction.
      */
     private void moveIndex() {
+        // If currentIndex is -1, it means the game has not started yet, so it set it to 0 to start with the first player
+        if (currentIndex == -1) {
+            currentIndex = 0;
+            return;
+        }
+
         if (isClockwise) {
             currentIndex = (currentIndex + 1) % playersIDs.size();
         } else {
