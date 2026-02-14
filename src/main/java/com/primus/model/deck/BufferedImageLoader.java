@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.awt.Image;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Optional;
@@ -30,7 +30,7 @@ public final class BufferedImageLoader implements ImageLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BufferedImageLoader.class);
     private static final String PATH = "/assets/cards/";
-    private final Map<String, Image> bufferedImages = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Image> bufferedImages = new ConcurrentHashMap<>();
 
     /**
      * Creates a new instance of BufferedImageLoader.
@@ -63,38 +63,30 @@ public final class BufferedImageLoader implements ImageLoader {
      * @return an Optional containing the loaded Image, or empty if loading fails
      */
     private Optional<Image> loadInternal(final String key) {
-        // Check cache first
-        final Image cached = bufferedImages.get(key);
-        if (cached != null) {
-            return Optional.of(cached);
-        }
-
         final String fullPath = PATH + key + ".png";
 
-        // Load image from resources
-        try (InputStream asset = getClass().getResourceAsStream(fullPath)) {
-            if (asset == null) {
-                LOGGER.warn("Image resource not found: {}", fullPath);
-                return Optional.empty();
+        // computeIfAbsent ensures that only one thread will load the image for a given key, while others
+        // will wait for the result
+        final Image result = bufferedImages.computeIfAbsent(key, k -> {
+            try (InputStream asset = getClass().getResourceAsStream(fullPath)) {
+                if (asset == null) {
+                    LOGGER.warn("Image resource not found: {}", fullPath);
+                    return null;
+                }
+                final BufferedImage image = ImageIO.read(asset);
+                if (image == null) {
+                    LOGGER.error("Failed to read image from stream: {}", fullPath);
+                } else {
+                    LOGGER.debug("Successfully loaded and cached image: {}", fullPath);
+                }
+                return image;
+            } catch (final IOException e) {
+                LOGGER.error("IOException while loading image: {}", fullPath, e);
+                return null;
             }
+        });
 
-            final BufferedImage image = ImageIO.read(asset);
-            if (image == null) {
-                LOGGER.error("Failed to read image from stream: {}", fullPath);
-                return Optional.empty();
-            }
-
-            // Atomically insert if absent, or get existing value if another thread already loaded it
-            final Image existing = bufferedImages.putIfAbsent(key, image);
-            final Image result = existing != null ? existing : image;
-
-            LOGGER.debug("Successfully loaded and cached image: {}", fullPath);
-            return Optional.of(result);
-
-        } catch (final IOException e) {
-            LOGGER.error("IOException while loading image: {}", fullPath, e);
-            return Optional.empty();
-        }
+        return Optional.ofNullable(result);
     }
 
 }
