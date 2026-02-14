@@ -9,8 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Random;
 import java.util.Objects;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -19,8 +20,10 @@ import java.util.concurrent.ExecutionException;
  * Implementation of {@link GameController} to manage the game loop and act as a bridge between view and model.
  */
 public final class GameControllerImpl implements GameController {
-    private static final int BOT_DELAY = 1000;
+    private static final int MAX_BOT_DELAY = 3000;
+    private static final int MIN_BOT_DELAY = 1500;
     private static final Logger LOGGER = LoggerFactory.getLogger(GameControllerImpl.class);
+    private static final Random RANDOM = new Random();
 
     private final GameManager manager;
     private final List<GameView> views = new ArrayList<>();
@@ -137,9 +140,9 @@ public final class GameControllerImpl implements GameController {
 
         LOGGER.debug("Shift started for the BOT ID: {}", player.getId());
 
+        sleep(); // Little delay for realism
         // Loop until the bot completes its turn in a valid way
         while (!turnCompleted) {
-            sleep(); // Little delay for realism
 
             // Ask the bot for its intention
             final Optional<Card> intention = player.playCard();
@@ -225,7 +228,7 @@ public final class GameControllerImpl implements GameController {
      */
     private void sleep() {
         try {
-            Thread.sleep(BOT_DELAY);
+            Thread.sleep(RANDOM.nextInt(MIN_BOT_DELAY, MAX_BOT_DELAY));
         } catch (final InterruptedException e) {
             LOGGER.error("BOT sleep interrupted", e);
             Thread.currentThread().interrupt();
