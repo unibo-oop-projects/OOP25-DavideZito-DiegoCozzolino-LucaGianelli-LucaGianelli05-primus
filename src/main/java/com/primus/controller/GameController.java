@@ -1,6 +1,5 @@
 package com.primus.controller;
 
-import com.primus.model.deck.Card;
 import com.primus.view.GameView;
 
 /**
@@ -23,16 +22,4 @@ public interface GameController {
      * @param view the GameView to be added to the controller
      */
     void addView(GameView view);
-
-    /**
-     * Notifies the Game that the player has chosen to play a card.
-     *
-     * @param card the card played by the human player
-     */
-    void humanPlayedCard(Card card);
-
-    /**
-     * Notifies the Game that the player has chosen to pass their turn.
-     */
-    void humanDrewCard();
 }

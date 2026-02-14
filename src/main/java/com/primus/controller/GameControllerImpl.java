@@ -102,16 +102,19 @@ public final class GameControllerImpl implements GameController {
     public void addView(final GameView view) {
         views.add(view);
 
-        view.setCardPlayedListener(this::humanPlayedCard);
-        view.setDrawListener(this::humanDrewCard);
+        view.setCardPlayedListener(this::onCardPlayed);
+        view.setDrawListener(this::onDrawCard);
 
         LOGGER.debug("New view added to controller");
     }
 
-    @Override
-    public void humanPlayedCard(final Card card) {
+    /**
+     * Callback invoked when the human player plays a card.
+     *
+     * @param card the card played by the human player
+     */
+    private void onCardPlayed(final Card card) {
         Objects.requireNonNull(card);
-
         LOGGER.debug("Callback View: Human player wants to play {}", card);
 
         if (this.humanInputFuture != null && !this.humanInputFuture.isDone()) {
@@ -121,8 +124,10 @@ public final class GameControllerImpl implements GameController {
         }
     }
 
-    @Override
-    public void humanDrewCard() {
+    /**
+     * Callback invoked when the human player draws a card.
+     */
+    private void onDrawCard() {
         LOGGER.debug("Callback View: Human player drawed a card");
         if (this.humanInputFuture != null && !this.humanInputFuture.isDone()) {
             this.humanInputFuture.complete(null);
