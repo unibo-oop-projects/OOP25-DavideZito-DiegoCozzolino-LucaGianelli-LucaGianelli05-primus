@@ -1,6 +1,7 @@
 package com.primus.model.rules;
 
 import com.primus.model.deck.Card;
+import com.primus.model.deck.CardEffect;
 import com.primus.model.deck.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,8 @@ public final class ValidatorImpl implements Validator {
         LOGGER.debug("Checking validity for card: {} on top of: {}", toValidate, topCard);
         return toValidate.isNativeBlack()
                 || toValidate.getColor() == topCard.getColor()
-                || toValidate.getValue() == topCard.getValue();
+                || toValidate.getValue() == topCard.getValue()
+                || toValidate.hasEffect(CardEffect.ALWAYS_PLAYABLE);
     }
 
     /**
