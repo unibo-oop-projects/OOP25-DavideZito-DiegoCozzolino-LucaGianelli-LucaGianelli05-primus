@@ -120,6 +120,8 @@ public final class GameControllerImpl implements GameController {
                 LOGGER.warn("Game ended without a winner");
             }
         }
+        LOGGER.info("Game loop terminated. Closing views...");
+        views.forEach(GameView::close);
     }
 
     @Override

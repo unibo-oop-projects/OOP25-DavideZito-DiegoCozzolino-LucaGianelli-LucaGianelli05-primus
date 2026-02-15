@@ -81,4 +81,9 @@ public interface GameView {
      * @param winnerName the name of the winning player, to be included in the game over message displayed to the user.
      */
     void showGameOverMessage(String winnerName);
+
+    /**
+     * Closes the game view.
+     */
+    void close();
 }

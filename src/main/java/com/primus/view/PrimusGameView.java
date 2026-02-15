@@ -336,6 +336,14 @@ public final class PrimusGameView extends JFrame implements GameView {
         });
     }
 
+    @Override
+    public void close() {
+        SwingUtilities.invokeLater(() -> {
+            LOGGER.info("Closing game view");
+            this.dispose();
+        });
+    }
+
     /**
      * Maps the card's color (which is an enum) to an actual Color object for rendering.
      *
