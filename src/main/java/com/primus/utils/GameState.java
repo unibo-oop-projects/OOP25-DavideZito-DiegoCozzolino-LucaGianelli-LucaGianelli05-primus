@@ -2,49 +2,43 @@ package com.primus.utils;
 
 import com.primus.model.deck.Card;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * DTO class which represents the game state.
  *
  * @param topCard currently played card
- * @param playerDeck current player's hand
+ * @param humanHand current player's hand
+ * @param playerId current player ID
+ * @param playersCardCounts a map of player IDs to the count of cards in their hands
+ * @param isMalusActive flag indicating if there are cards to be drawn at the start
  */
-public record GameState(Card topCard, List<Card> playerDeck) {
+public record GameState(
+        Card topCard,
+        List<Card> humanHand,
+        Map<Integer, Integer> playersCardCounts,
+        int playerId,
+        boolean isMalusActive
+) {
+
     /**
+     * Constuctor that ensures immutability of the humanHand list and non-null values for topCard and activePlayer.
+     *
      * @param topCard currently played card
-     * @param playerDeck current player's hand
+     * @param humanHand current player's hand
+     * @param playerId current player's ID
+     * @param playersCardCounts a map of player IDs to the count of cards in their hands
+     * @param isMalusActive flag indicating if there are cards to be drawn at the start of the turn due to a
+     *                      malus effect
      */
     public GameState {
-        playerDeck = List.copyOf(playerDeck);
-    }
+        Objects.requireNonNull(topCard);
+        Objects.requireNonNull(humanHand);
+        Objects.requireNonNull(playersCardCounts);
 
-    /**
-     * @param newTopCard new card currently in play
-     * @return `GameState` based on the current one modifying the card in play
-     */
-    public GameState withTopCard(final Card newTopCard) {
-        return new GameState(newTopCard, this.playerDeck);
-    }
-
-    /**
-     * @param card card to add to the player's hand
-     * @return `GameState` based on the current one adding a card to the player's hand
-     */
-    public GameState withAddedCard(final Card card) {
-        final var newDeck = new ArrayList<>(this.playerDeck);
-        newDeck.add(card);
-        return new GameState(this.topCard, newDeck);
-    }
-
-    /**
-     * @param newTopCard new card currently in play
-     * @param card card to add to the player's hand
-     * @return `GameState` based on the current one modifying the card in play and adding a card to the player's hand
-     */
-    public GameState newFromCurrent(final Card newTopCard, final Card card) {
-        return withAddedCard(card).withTopCard(topCard);
+        playersCardCounts = Map.copyOf(playersCardCounts);
+        humanHand = List.copyOf(humanHand);
     }
 }
-

@@ -1,6 +1,7 @@
 plugins {
     application
     java
+    id("com.gradleup.shadow") version "9.3.1"
     id("org.danilopianini.gradle-java-qa") version "1.164.0"
 }
 
@@ -38,6 +39,7 @@ dependencies{
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     //Spotbugs annotations
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.7.3")
+    testImplementation("com.github.spotbugs:spotbugs-annotations:4.7.3")
     // slf4j for logging
     implementation("org.slf4j:slf4j-api:2.0.17")
     // logback for logging

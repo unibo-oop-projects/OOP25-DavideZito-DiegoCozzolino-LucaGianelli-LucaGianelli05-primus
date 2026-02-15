@@ -1,13 +1,13 @@
 package com.primus.controller;
 
-import com.primus.model.deck.Card;
+import com.primus.view.GameView;
 
 /**
  * Game controller interface, manages the game loop and acts as a bridge between view and model.
  */
 public interface GameController {
     /**
-     * Starts the game loop in a separate thread.
+     * Starts the game loop.
      */
     void start();
 
@@ -17,14 +17,9 @@ public interface GameController {
     void stop();
 
     /**
-     * Notifies the Game that the player has chosen to play a card.
+     * Adds a view to the controller, allowing it to receive updates and user input.
      *
-     * @param card the card played by the human player
+     * @param view the GameView to be added to the controller
      */
-    void humanPlayedCard(Card card);
-
-    /**
-     * Notifies the Game that the player has chosen to pass their turn.
-     */
-    void humanDrewCard();
+    void addView(GameView view);
 }
